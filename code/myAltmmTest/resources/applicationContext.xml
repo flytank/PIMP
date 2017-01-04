@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans classpath:/org/springframework/beans/factory/xml/spring-beans-4.0.xsd
+				http://www.springframework.org/schema/context classpath:/org/springframework/context/config/spring-context-4.0.xsd
+				http://www.springframework.org/schema/aop classpath:/org/springframework/aop/config/spring-aop-4.0.xsd
+				http://www.springframework.org/schema/tx classpath:/org/springframework/transaction/config/spring-tx-4.0.xsd">
+
+	<context:annotation-config />
+	<context:component-scan base-package="com.altmm" />
+
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<!-- Mysql数据库配置 -->
+		<!--  
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://192.168.2.156:3306/jeefw?useUnicode=true&amp;characterEncoding=utf-8" />
+		<property name="user" value="root" />
+		<property name="password" value="system" />
+		-->
+		<!-- SQL Server数据库配置 -->
+		<!--
+		<property name="driverClass" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+		<property name="jdbcUrl" value="jdbc:sqlserver://localhost:1433;DatabaseName=altmm" />
+		<property name="user" value="sa" />
+		<property name="password" value="123456" />
+		-->
+		<!-- Oracle数据库配置 -->
+		<property name="driverClass" value="oracle.jdbc.driver.OracleDriver" />
+		<!-- <property name="jdbcUrl" value="jdbc:oracle:thin:@192.168.2.103:1521:ORACLE" /> --> 
+		<property name="jdbcUrl" value="jdbc:oracle:thin:@127.0.0.1:1521:ORCL" /> 
+		<property name="user" value="ALTMCARE_DZYY" />
+		<property name="password" value="ALTMCARE_DZYY" />
+		<!-- <property name="jdbcUrl" value="jdbc:oracle:thin:@192.168.2.103:1521:ORACLE" />
+		<property name="user" value="ALTMTEST" />
+		<property name="password" value="ALTMTEST" /> -->
+			
+		<property name="acquireIncrement" value="3" />
+		<property name="idleConnectionTestPeriod" value="120" />
+		<property name="initialPoolSize" value="3" />
+		<property name="minPoolSize" value="3" />
+		<property name="maxPoolSize" value="15" />
+		<property name="numHelperThreads" value="3" />
+		<property name="preferredTestQuery" value="select 1" />
+	</bean>
+		
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="hibernateProperties">
+			<props>
+				<!-- MySql的Dialect方言配置 --> 
+				<!--  <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>-->
+				<!-- SQL Server的Dialect方言配置 --> 
+				<!-- <prop key="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</prop> -->
+				<!-- Oracle的Dialect方言配置 --> 
+				<prop key="hibernate.dialect">org.hibernate.dialect.OracleDialect</prop> 
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.use_outer_join">true</prop>
+				<prop key="hibernate.jdbc.fetch_size">30</prop>
+				<prop key="hibernate.jdbc.batch_size">30</prop>
+				<prop key="hibernate.jdbc.batch_versioned_data">true</prop>
+				<prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.use_query_cache">true</prop>
+				<prop key="hibernate.cache.provider_class">net.sf.ehcache.hibernate.EhCacheProvider</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory</prop>
+				<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="javax.persistence.validation.mode">none</prop>
+				<!-- 此注释里代码只跟全文检索有关，如需全文检索功能，放开注释，然后找到本文件的第87行和web.xml的第15行放开注释，重启应用服务器即可。可配置，不影响框架使用。苹果Mac电脑需要修改hibernate.search.default.indexBase参数。 -->
+				<!--
+				<prop key="hibernate.search.default.directory_provider">filesystem</prop>
+				<prop key="hibernate.search.default.indexBase">D:/altmmLuceneIndexes</prop>
+				<prop key="hibernate.search.default.refresh">1800</prop>
+				<prop key="hibernate.search.default.indexwriter.max_merge_docs">100</prop>
+				<prop key="hibernate.search.default.indexwriter.ram_buffer_size">64</prop>
+				<prop key="hibernate.search.default.optimizer.operation_limit.max">1000</prop>
+				<prop key="hibernate.search.default.optimizer.transaction_limit.max">100</prop>
+				-->
+			</props>
+		</property>
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>com.altmm.model</value>  
+			</list>
+		</property>
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+	<!-- 此注释里代码的作用是应用服务器每次启动都生成索引。在SystemInitListener里执行。可配置，不影响框架使用。 -->
+	<!-- <bean id="informationService" class="com.altmm.service.sys.impl.InformationServiceImpl" /> -->
+	
+	<bean id="indexingInformationJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="informationServiceImpl" />
+		<property name="targetMethod" value="indexingInformation" />
+	</bean>
+	<!-- 每天凌晨2点执行定时任务，生成索引。 -->
+	<bean id="indexingInformationJobTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="indexingInformationJob" />
+		<property name="cronExpression" value="0 0 2 * * ?" />
+	</bean>
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean" lazy-init="false">
+		<property name="triggers">
+			<list>
+				<ref bean="indexingInformationJobTrigger" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="updateUserPwdLogicBean" class="com.app.logic.UpdateUserPwdLogicServer" />
+
+	<!-- 配置业务逻辑池 -->
+	<bean id="logicExecuteWorkerEnginBean" class="com.app.logic.LogicExecuteWorkerEngine">
+		<property name="requestBeanTrans">
+			<map>
+				<entry key="1302">
+					<value>com.app.bean.UpdateUserPwdRequestBean</value>
+				</entry>
+			</map>
+		</property>
+		<property name="logicPool">
+			<map>
+				<entry key="1302">
+					<ref bean="updateUserPwdLogicBean" />
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!-- 配置接口传输操作协议对象 -->
+	<bean id="transmissionBean" class="com.app.logic.Transmission">
+	</bean>
+
+</beans>

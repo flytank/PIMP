@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sec="http://www.springframework.org/schema/security" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/security classpath:/org/springframework/security/config/spring-security-4.0.xsd
+    http://www.springframework.org/schema/beans classpath:/org/springframework/beans/factory/xml/spring-beans-4.0.xsd">
+	<sec:global-method-security pre-post-annotations="enabled">
+		<sec:expression-handler ref="expressionHandler" />
+	</sec:global-method-security>
+	<sec:http pattern="/static/**" security="none" />
+	<sec:http auto-config="true" use-expressions="true">
+		<sec:intercept-url pattern="/**" access="ROLE_ADMIN" />
+		<sec:form-login login-page="/login.jsp" authentication-failure-url="/login.jsp?login_error=1" />
+		<sec:http-basic />
+		<sec:logout logout-success-url="/index.jsp" />
+		<sec:remember-me />
+		<sec:headers />
+		<sec:csrf />
+	</sec:http>
+	<sec:authentication-manager>
+		<sec:authentication-provider>
+			<sec:password-encoder ref="encoder" />
+			<sec:jdbc-user-service data-source-ref="dataSource" />
+		</sec:authentication-provider>
+	</sec:authentication-manager>
+	<bean id="aclCache" class="org.springframework.security.acls.domain.EhCacheBasedAclCache">
+		<constructor-arg>
+			<bean class="org.springframework.cache.ehcache.EhCacheFactoryBean">
+				<property name="cacheManager">
+					<bean class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" />
+				</property>
+				<property name="cacheName" value="aclCache" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg>
+			<bean class="org.springframework.security.acls.domain.DefaultPermissionGrantingStrategy">
+				<constructor-arg>
+					<bean class="org.springframework.security.acls.domain.ConsoleAuditLogger" />
+				</constructor-arg>
+			</bean>
+		</constructor-arg>
+		<constructor-arg>
+			<bean class="org.springframework.security.acls.domain.AclAuthorizationStrategyImpl">
+				<constructor-arg>
+					<list>
+						<bean class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+							<constructor-arg value="ROLE_ACL_ADMIN" />
+						</bean>
+					</list>
+				</constructor-arg>
+			</bean>
+		</constructor-arg>
+	</bean>
+	<bean id="lookupStrategy" class="org.springframework.security.acls.jdbc.BasicLookupStrategy">
+		<constructor-arg ref="dataSource" />
+		<constructor-arg ref="aclCache" />
+		<constructor-arg>
+			<bean class="org.springframework.security.acls.domain.AclAuthorizationStrategyImpl">
+				<constructor-arg>
+					<bean class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+						<constructor-arg value="ROLE_ADMINISTRATOR" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</constructor-arg>
+		<constructor-arg>
+			<bean class="org.springframework.security.acls.domain.ConsoleAuditLogger" />
+		</constructor-arg>
+	</bean>
+	<bean id="aclService" class="org.springframework.security.acls.jdbc.JdbcMutableAclService">
+		<constructor-arg ref="dataSource" />
+		<constructor-arg ref="lookupStrategy" />
+		<constructor-arg ref="aclCache" />
+		<property name="classIdentityQuery" value="SELECT @@IDENTITY" />
+		<property name="sidIdentityQuery" value="SELECT @@IDENTITY" />
+	</bean>
+	<bean id="encoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+	<bean id="loggerListener" class="org.springframework.security.authentication.event.LoggerListener" />
+	<bean id="expressionHandler" class="org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler">
+		<property name="permissionEvaluator" ref="permissionEvaluator" />
+		<property name="permissionCacheOptimizer">
+			<bean class="org.springframework.security.acls.AclPermissionCacheOptimizer">
+				<constructor-arg ref="aclService" />
+			</bean>
+		</property>
+	</bean>
+	<bean id="permissionEvaluator" class="org.springframework.security.acls.AclPermissionEvaluator">
+		<constructor-arg ref="aclService" />
+	</bean>
+</beans>

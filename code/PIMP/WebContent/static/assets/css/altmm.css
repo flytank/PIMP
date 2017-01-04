@@ -1,0 +1,97 @@
+@CHARSET "utf-8";
+select {
+	padding: 0px 0px 0px 1px !important;
+	
+}
+/*左上角log的样式*/
+.navbar .pull-left img {
+	width: 110px;
+	height: 26px;
+}
+.navbar .pull-right img {
+	width: 32px;
+	height: 32px;
+}
+.navbar .navbar-header small span {
+	font-size: 14px;
+	font-family: 微软雅黑;
+	color: #ffffff;
+}
+.ace-nav > li.custom > a:hover,
+.ace-nav > li.custom > a:focus,
+.ace-nav > li.open.green > a {
+  background-color: #1D7DFF;
+}
+/*用户页面 同步按钮的样式*/
+.btn-synchro,
+.btn-synchro:focus {
+  background-color: #3bc541 !important;
+  border-color: #3bc541;
+}
+.btn-synchro:hover,
+.btn-synchro:active,
+.open .btn-synchro.dropdown-toggle {
+  background-color: #3B9D41 !important;
+  border-color: #3bc541;
+}
+/*统计页面 导出按钮的样式*/
+.btn-export,
+.btn-export:focus {
+  background-color: #3B9D41 !important;
+  border-color: #CCFFFF;
+}
+.btn-export:hover,
+.btn-export:active,
+.open .btn-export.dropdown-toggle {
+  background-color: #CCFFFF !important;
+  border-color: #CCFFFF;
+}
+/*查询条件 label的样式*/
+.row .well label {
+	font-family: 微软雅黑;
+	font-size: 14px;
+	color: #acacac
+}
+/*查询条件框及字体的样式*/
+.row .well input {
+	height: 34px;
+	font-size: 13px;
+	border: 1px solid #d2d2d2;
+    outline: none;
+}
+.row .well input:FOCUS {
+	border: 1px solid #333333;
+}
+.cond-input-text {
+	width: 125px;
+	padding-left: 5px;
+}
+.cond-input-date {
+	width: 81px;
+	padding-left: 5px;
+}
+.cond-input-content {
+	width : 300px;
+	padding-left: 5px;
+}
+.row .well select {
+	height: 34px;
+	font-size: 12px;
+}
+/*通告信息弹出框的样式*/
+#faq-list-1 .panel-heading .tgbt {
+	padding-left: 5px;
+    display: -moz-inline-box;
+    display: inline-block;
+    width: 230px;
+}
+#faq-list-1 .panel-heading .gqsj {
+	padding-left: 15px;
+}
+/*homepage页面样式*/
+.page-header select {
+	font-size: 12px;
+	font-family: 微软雅黑;
+	color: #333333;
+	height: 34px;
+}
